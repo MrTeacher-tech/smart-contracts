@@ -20,6 +20,8 @@ interface IResolver {
 }
 
 
+
+
 // Minimal PriceOracle interface
 interface IPriceOracle {
     struct Price {
@@ -27,6 +29,8 @@ interface IPriceOracle {
         uint256 premium;
     }
 }
+
+
 
 // Minimal ETHRegistrarController interface
 interface IETHRegistrarController {
@@ -42,6 +46,7 @@ interface IETHRegistrarController {
         uint16 ownerControlledFuses
     ) external payable;
 
+    function commit(bytes32 commitment) external;
     function available(string calldata name) external view returns (bool);
     function valid(string calldata name) external pure returns (bool);
 }
@@ -64,6 +69,14 @@ contract IndieNodeENSRegistrar is Ownable, ReentrancyGuard {
 
         // Controller must be set manually or via updateController()
     }
+
+    event NameRegistered(
+    string name,
+    address indexed registrant,
+    address indexed owner,
+    uint256 totalCost,
+    uint256 timestamp
+);
 
     // Optional function to set controller after deploy
     function updateController(address _controller) external onlyOwner {
@@ -104,6 +117,8 @@ contract IndieNodeENSRegistrar is Ownable, ReentrancyGuard {
             reverseRecord,
             ownerControlledFuses
         );
+
+        emit NameRegistered(name, msg.sender, owner, totalCost, block.timestamp);
     }
 
     function setContentHash(
