@@ -15,6 +15,11 @@ interface IBaseRegistrar {
     function nameExpires(uint256 id) external view returns (uint256);
 }
 
+interface IResolver {
+    function setContenthash(bytes32 node, bytes calldata hash) external;
+}
+
+
 // Minimal PriceOracle interface
 interface IPriceOracle {
     struct Price {
@@ -100,6 +105,16 @@ contract IndieNodeENSRegistrar is Ownable, ReentrancyGuard {
             ownerControlledFuses
         );
     }
+
+    function setContentHash(
+    string calldata name,
+    bytes calldata contentHash,
+    address resolver
+) external onlyOwner {
+    bytes32 labelHash = keccak256(bytes(name));
+    bytes32 node = keccak256(abi.encodePacked(bytes32(0), labelHash));
+    IResolver(resolver).setContenthash(node, contentHash);
+}
 
     function isAvailable(string calldata name) external view returns (bool) {
         return controller.available(name);
