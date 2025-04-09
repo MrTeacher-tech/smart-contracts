@@ -35,6 +35,7 @@ interface IPriceOracle {
 // Minimal ETHRegistrarController interface
 interface IETHRegistrarController {
     function rentPrice(string calldata name, uint256 duration) external view returns (IPriceOracle.Price memory);
+    
     function register(
         string calldata name,
         address owner,
@@ -45,6 +46,18 @@ interface IETHRegistrarController {
         bool reverseRecord,
         uint16 ownerControlledFuses
     ) external payable;
+
+    function makeCommitment(
+    string calldata name,
+    address owner,
+    bytes32 secret,
+    address resolver,
+    bytes[] calldata data,
+    bool reverseRecord,
+    uint16 ownerControlledFuses
+) external pure returns (bytes32);
+
+
 
     function commit(bytes32 commitment) external;
     function available(string calldata name) external view returns (bool);
@@ -83,6 +96,31 @@ contract IndieNodeENSRegistrar is Ownable, ReentrancyGuard {
         require(_controller != address(0), "Invalid controller address");
         controller = IETHRegistrarController(_controller);
     }
+
+    function commitToName(
+    string calldata name,
+    address owner,
+    bytes32 secret,
+    address resolver,
+    bytes[] calldata data,
+    bool reverseRecord,
+    uint16 ownerControlledFuses
+) external {
+    require(address(controller) != address(0), "Controller not set");
+
+    bytes32 commitment = controller.makeCommitment(
+        name,
+        owner,
+        secret,
+        resolver,
+        data,
+        reverseRecord,
+        ownerControlledFuses
+    );
+
+    controller.commit(commitment);
+}
+
 
     function getTotalPrice(string calldata name, uint256 duration) external view returns (uint256 totalCost, uint256 base, uint256 premium) {
     IPriceOracle.Price memory price = controller.rentPrice(name, duration);
